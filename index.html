@@ -445,7 +445,12 @@
     let cur = 1;
     let activeType = "all";
     let trackIndex = 0;
-    const tracks = ["Lingering On My Lips6한글 (1).mp3", "Lingering On My Lips6.mp3"];
+    const ASSET_BASE_URL = "https://pub-4158c04db96a4ecbb15b9e0469c3f41f.r2.dev";
+    const tracks = [
+        `${ASSET_BASE_URL}/Lingering%20On%20My%20Lips6%ED%95%9C%EA%B8%80%20%281%29.mp3`,
+        `${ASSET_BASE_URL}/Lingering%20On%20My%20Lips6.mp3`
+    ];
+    const trackLabels = ["Lingering On My Lips6한글 (1).mp3", "Lingering On My Lips6.mp3"];
     const size = 12;
     const fallbackImage = "https://via.placeholder.com/800x450/222/fff?text=No+Preview";
 
@@ -458,9 +463,7 @@
 
     async function load() {
         try {
-            const res = await fetch(`prompts.json?v=${Date.now()}`, { cache: "no-store" });
-            if (!res.ok) throw new Error("prompts.json load failed");
-            raw = await res.json();
+            raw = await loadPromptData();
             applyFilters();
         } catch (e) {
             document.getElementById("mainGrid").innerHTML = `
@@ -469,6 +472,29 @@
                     <p>${"\ub85c\uceec \uc11c\ubc84\ub85c \u0069\u006e\u0064\u0065\u0078\u002e\u0068\u0074\u006d\u006c\uc744 \uc5f4\uc5b4\uc8fc\uc138\uc694\u002e"}</p>
                 </div>`;
         }
+    }
+
+    async function loadPromptData() {
+        const stamp = Date.now();
+        const r2Res = await fetch(`${ASSET_BASE_URL}/prompts.json?v=${stamp}`, { cache: "no-store" });
+        if (r2Res.ok) return r2Res.json();
+
+        const manifestRes = await fetch(`prompts-manifest.json?v=${stamp}`, { cache: "no-store" });
+        if (manifestRes.ok) {
+            const manifest = await manifestRes.json();
+            const chunks = await Promise.all(
+                manifest.files.map(async (file) => {
+                    const res = await fetch(`${file}?v=${stamp}`, { cache: "no-store" });
+                    if (!res.ok) throw new Error(`${file} load failed`);
+                    return res.json();
+                })
+            );
+            return chunks.flat();
+        }
+
+        const res = await fetch(`prompts.json?v=${stamp}`, { cache: "no-store" });
+        if (!res.ok) throw new Error("prompts data load failed");
+        return res.json();
     }
 
     function normalizeItem(item, index) {
@@ -715,7 +741,7 @@
         const seek = document.getElementById("musicSeek");
         trackIndex = (index + tracks.length) % tracks.length;
         bgm.src = tracks[trackIndex];
-        document.getElementById("trackName").innerText = tracks[trackIndex];
+        document.getElementById("trackName").innerText = trackLabels[trackIndex];
         seek.value = 0;
         btn.innerText = shouldPlay ? "PAUSE" : "PLAY";
         btn.classList.toggle("playing", shouldPlay);
