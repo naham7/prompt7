@@ -1,0 +1,778 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouMind 2.0 Prompt Gallery</title>
+    <style>
+        :root {
+            --bg: #151819;
+            --panel: #252a2b;
+            --panel-2: #303637;
+            --accent: #c8bd00;
+            --line: #746b57;
+            --text: #f4f1ea;
+            --muted: #aaa39a;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: radial-gradient(circle at top, #202426, var(--bg) 42%);
+            color: var(--text);
+            font-family: Arial, "Noto Sans KR", sans-serif;
+            overflow-x: hidden;
+        }
+        header {
+            text-align: center;
+            padding: 52px 20px 42px;
+        }
+        .logo {
+            font-size: 48px;
+            font-weight: 900;
+            margin-bottom: 24px;
+        }
+        .search-box {
+            max-width: 720px;
+            margin: 0 auto;
+            display: flex;
+            border: 2px solid var(--line);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
+        }
+        #sw {
+            flex: 1;
+            min-width: 0;
+            padding: 18px 20px;
+            border: none;
+            background: var(--panel-2);
+            color: var(--text);
+            font-size: 17px;
+            outline: none;
+        }
+        #sw::placeholder { color: #8f8f8f; }
+        .search-btn {
+            background: var(--accent);
+            color: #111;
+            border: none;
+            padding: 0 34px;
+            font-size: 16px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+        .music-player {
+            max-width: 720px;
+            margin: 14px auto 0;
+            display: grid;
+            grid-template-columns: auto auto auto 1fr;
+            gap: 8px;
+            align-items: center;
+        }
+        .music-btn {
+            background: #353b3c;
+            color: var(--text);
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            padding: 10px 14px;
+            font-size: 15px;
+            font-weight: 900;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .music-btn.playing {
+            background: var(--accent);
+            color: #111;
+            border-color: var(--accent);
+        }
+        .track-name {
+            color: var(--muted);
+            font-size: 14px;
+            font-weight: 800;
+            text-align: left;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .music-seek {
+            grid-column: 1 / -1;
+            width: 100%;
+            accent-color: var(--accent);
+        }
+        .toolbar {
+            max-width: 1280px;
+            margin: 0 auto 22px;
+            padding: 0 24px;
+            display: flex;
+            gap: 12px;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .pill {
+            background: var(--accent);
+            color: #111;
+            padding: 7px 18px;
+            font-weight: 900;
+            border-radius: 22px;
+        }
+        .hint { color: var(--muted); font-weight: 700; }
+        .type-tabs {
+            max-width: 1280px;
+            margin: 0 auto 22px;
+            padding: 0 24px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .type-tab {
+            background: #353b3c;
+            color: var(--text);
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            padding: 10px 18px;
+            font-size: 15px;
+            font-weight: 900;
+            cursor: pointer;
+        }
+        .type-tab.active {
+            background: var(--accent);
+            color: #111;
+            border-color: var(--accent);
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 26px;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+        .card {
+            background: var(--panel);
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid var(--line);
+            cursor: pointer;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent);
+        }
+        .thumb {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background: #050505;
+            object-fit: cover;
+            display: block;
+        }
+        .thumb-wrap {
+            position: relative;
+            background: #050505;
+        }
+        .play-badge {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 58px;
+            height: 58px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.74);
+            border: 2px solid rgba(255, 255, 255, 0.88);
+        }
+        .play-badge::after {
+            content: "";
+            position: absolute;
+            left: 23px;
+            top: 17px;
+            border-left: 18px solid #fff;
+            border-top: 12px solid transparent;
+            border-bottom: 12px solid transparent;
+        }
+        .card-info { padding: 18px; }
+        .card-title {
+            min-height: 48px;
+            font-size: 18px;
+            font-weight: 900;
+            line-height: 1.35;
+            margin-bottom: 10px;
+        }
+        .card-desc {
+            height: 44px;
+            color: var(--muted);
+            overflow: hidden;
+            font-size: 14px;
+            line-height: 1.55;
+            margin-bottom: 16px;
+        }
+        .go-btn {
+            width: 100%;
+            padding: 13px;
+            background: #353b3c;
+            color: var(--text);
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 900;
+            cursor: pointer;
+        }
+        .pg-wrap {
+            margin: 46px auto;
+            text-align: center;
+        }
+        .pg-input {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            color: var(--text);
+            padding: 10px;
+            width: 86px;
+            text-align: center;
+            border-radius: 5px;
+            margin-right: 8px;
+        }
+        .pg-btn, .p-num {
+            background: var(--accent);
+            color: #111;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 5px;
+            font-weight: 900;
+            cursor: pointer;
+        }
+        .pg-numbers {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 18px;
+            flex-wrap: wrap;
+        }
+        .p-num {
+            background: #353b3c;
+            color: var(--text);
+        }
+        .p-num.active {
+            background: var(--accent);
+            color: #111;
+        }
+        .p-num:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+        .page-side {
+            position: fixed;
+            top: 50%;
+            z-index: 1000;
+            width: 82px;
+            height: 86px;
+            transform: translateY(-50%);
+            background: #fff200;
+            color: transparent;
+            border: 0;
+            cursor: pointer;
+            filter: drop-shadow(0 5px 0 #111) drop-shadow(0 10px 18px rgba(0, 0, 0, 0.35));
+        }
+        .page-side.left {
+            left: 18px;
+            clip-path: polygon(100% 25%, 42% 25%, 42% 5%, 0 50%, 42% 95%, 42% 75%, 100% 75%);
+        }
+        .page-side.right {
+            right: 18px;
+            clip-path: polygon(0 25%, 58% 25%, 58% 5%, 100% 50%, 58% 95%, 58% 75%, 0 75%);
+        }
+        .page-side:disabled {
+            opacity: 0.25;
+            cursor: not-allowed;
+        }
+        #modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(8, 9, 9, 0.93);
+            display: none;
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            padding: 26px;
+        }
+        .m-close {
+            position: absolute;
+            top: 18px;
+            right: 26px;
+            color: #fff;
+            font-size: 42px;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .m-box {
+            background: #151819;
+            color: var(--text);
+            width: min(1320px, 100%);
+            height: min(86vh, 900px);
+            display: grid;
+            grid-template-columns: 1.25fr 0.85fr;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid #2d3233;
+        }
+        .m-media {
+            background: #050505;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: auto;
+        }
+        .m-media img, .m-media video {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        .m-side {
+            padding: 42px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+        .m-side h1 {
+            margin: 0;
+            font-size: 34px;
+            line-height: 1.2;
+        }
+        .meta { color: var(--muted); font-weight: 700; }
+        .m-prompt {
+            background: #27290e;
+            border: 1px solid #4a4b22;
+            padding: 20px;
+            font-size: 15px;
+            white-space: pre-wrap;
+            line-height: 1.65;
+            max-height: 42vh;
+            overflow: auto;
+        }
+        .m-copy, .m-link {
+            display: block;
+            width: 100%;
+            background: #000;
+            color: #fff;
+            padding: 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 900;
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .empty {
+            grid-column: 1 / -1;
+            padding: 80px 20px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 18px;
+        }
+        @media (max-width: 900px) {
+            .logo { font-size: 38px; }
+            .search-box { flex-direction: column; }
+            .search-btn { padding: 15px; }
+            .music-player { grid-template-columns: repeat(3, auto); }
+            .track-name { grid-column: 1 / -1; text-align: center; }
+            .toolbar { flex-direction: column; align-items: flex-start; }
+            .m-box {
+                height: 92vh;
+                grid-template-columns: 1fr;
+                grid-template-rows: minmax(260px, 45%) 1fr;
+            }
+            .m-side { padding: 24px; }
+            .page-side {
+                width: 56px;
+                height: 60px;
+            }
+            .page-side.left { left: 8px; }
+            .page-side.right { right: 8px; }
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div class="logo"> Your prompt </div>
+    <div class="search-box">
+        <input type="text" id="sw" placeholder="&#54532;&#47212;&#54532;&#53944;, &#51228;&#47785;, &#49444;&#47749;, &#51089;&#49457;&#51088; &#44160;&#49353;..." onkeyup="if(event.key==='Enter') doSearch()">
+        <button class="search-btn" onclick="doSearch()">&#44160;&#49353;</button>
+    </div>
+    <div class="music-player">
+        <button class="music-btn" onclick="prevTrack()">PREV</button>
+        <button class="music-btn" id="musicBtn" onclick="toggleMusic()">PLAY</button>
+        <button class="music-btn" onclick="nextTrack()">NEXT</button>
+        <div class="track-name" id="trackName">저음몽환적.mp3</div>
+        <input class="music-seek" id="musicSeek" type="range" min="0" max="100" value="0" step="0.1" oninput="seekMusic(this.value)">
+    </div>
+    <audio id="bgm" preload="metadata"></audio>
+</header>
+
+<div class="toolbar">
+    <div class="pill" id="totalCnt">&#48520;&#47084;&#50724;&#45716; &#51473;...</div>
+    <div class="hint" id="pgStatus">Page 1</div>
+</div>
+
+<div class="type-tabs">
+    <button class="type-tab active" id="tabAll" onclick="setType('all')">&#51204;&#52404;</button>
+    <button class="type-tab" id="tabImage" onclick="setType('image')">&#51060;&#48120;&#51648;</button>
+    <button class="type-tab" id="tabVideo" onclick="setType('video')">&#50689;&#49345;</button>
+</div>
+
+<div class="grid" id="mainGrid"></div>
+
+<button class="page-side left" id="sidePrev" onclick="goPage(cur - 1)" aria-label="Previous page">&lt;</button>
+<button class="page-side right" id="sideNext" onclick="goPage(cur + 1)" aria-label="Next page">&gt;</button>
+
+<div class="pg-wrap">
+    <input type="number" id="jumpIdx" class="pg-input" placeholder="&#54168;&#51060;&#51648;">
+    <button class="pg-btn" onclick="jumpPage()">&#51060;&#46041;</button>
+    <div class="pg-numbers" id="pgBtns"></div>
+</div>
+
+<div id="modal" onclick="if(event.target.id==='modal') closeM()">
+    <span class="m-close" onclick="closeM()">&times;</span>
+    <div class="m-box">
+        <div class="m-media" id="mVisual"></div>
+        <div class="m-side" id="mText"></div>
+    </div>
+</div>
+
+<script>
+    let raw = [];
+    let data = [];
+    let cur = 1;
+    let activeType = "all";
+    let trackIndex = 0;
+    const tracks = ["Lingering On My Lips6한글 (1).mp3", "Lingering On My Lips6.mp3"];
+    const size = 12;
+    const fallbackImage = "https://via.placeholder.com/800x450/222/fff?text=No+Preview";
+
+    const esc = (value = "") => String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+
+    async function load() {
+        try {
+            const res = await fetch(`prompts.json?v=${Date.now()}`, { cache: "no-store" });
+            if (!res.ok) throw new Error("prompts.json load failed");
+            raw = await res.json();
+            applyFilters();
+        } catch (e) {
+            document.getElementById("mainGrid").innerHTML = `
+                <div class="empty">
+                    <h2>${"\u0070\u0072\u006f\u006d\u0070\u0074\u0073\u002e\u006a\u0073\u006f\u006e\uc744 \ubd88\ub7ec\uc624\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4\u002e"}</h2>
+                    <p>${"\ub85c\uceec \uc11c\ubc84\ub85c \u0069\u006e\u0064\u0065\u0078\u002e\u0068\u0074\u006d\u006c\uc744 \uc5f4\uc5b4\uc8fc\uc138\uc694\u002e"}</p>
+                </div>`;
+        }
+    }
+
+    function normalizeItem(item, index) {
+        const media = Array.isArray(item.media) ? item.media : [];
+        const images = Array.isArray(item.images) ? item.images : [];
+        const videos = Array.isArray(item.videos) ? item.videos : [];
+        const merged = [
+            ...media,
+            ...videos.map(url => ({ url, type: "video" })),
+            ...images.map(url => ({ url, type: "image" }))
+        ].filter(x => x && x.url);
+
+        return {
+            ...item,
+            id: item.id || `p${index + 1}`,
+            title: item.title || `Prompt #${index + 1}`,
+            description: item.description || "",
+            prompt: item.prompt || "",
+            authorName: item.author && item.author.name ? item.author.name : "",
+            media: merged.length ? merged : [{ url: fallbackImage, type: "image" }],
+            searchText: (item.searchText || [
+                item.title,
+                item.description,
+                item.prompt,
+                item.author && item.author.name,
+                item.sourceUrl
+            ].join(" ")).toLowerCase()
+        };
+    }
+
+    function updateTotal() {
+        const q = document.getElementById("sw").value.trim();
+        const label = activeType === "video" ? "\uc601\uc0c1" : activeType === "image" ? "\uc774\ubbf8\uc9c0" : "\uc804\uccb4";
+        document.getElementById("totalCnt").innerText = q ? `${label} \uac80\uc0c9 \uacb0\uacfc: ${data.length}` : `${label}: ${data.length}`;
+    }
+
+    function hasType(item, type) {
+        if (type === "all") return true;
+        return item.media.some(media => media.type === type);
+    }
+
+    function mediaHtml(media, className = "thumb") {
+        const src = esc(media.url || fallbackImage);
+        if (media.type === "video") {
+            return `<video class="${className}" src="${src}" playsinline controls preload="none"></video>`;
+        }
+        return `<img class="${className}" src="${src}" loading="lazy" onerror="this.src='${fallbackImage}'">`;
+    }
+
+    function cardMediaHtml(item) {
+        if (activeType === "video" || item.videos.length) {
+            const thumb = item.images[0] || fallbackImage;
+            return `
+                <div class="thumb-wrap">
+                    <img class="thumb" src="${esc(thumb)}" loading="lazy" onerror="this.src='${fallbackImage}'">
+                    <span class="play-badge"></span>
+                </div>`;
+        }
+        return mediaHtml(item.media[0]);
+    }
+
+    function draw() {
+        const grid = document.getElementById("mainGrid");
+        grid.innerHTML = "";
+
+        if (!data.length) {
+            grid.innerHTML = `<div class="empty">\uac80\uc0c9 \uacb0\uacfc\uac00 \uc5c6\uc2b5\ub2c8\ub2e4.</div>`;
+            document.getElementById("pgStatus").innerText = "Page 0 of 0";
+            document.getElementById("pgBtns").innerHTML = "";
+            updateTotal();
+            updateSideButtons(0);
+            return;
+        }
+
+        const totalPages = Math.ceil(data.length / size);
+        cur = Math.min(cur, totalPages);
+        const slice = data.slice((cur - 1) * size, cur * size);
+
+        slice.forEach(item => {
+            const el = document.createElement("div");
+            el.className = "card";
+            el.onclick = () => openM(item.id);
+            el.innerHTML = `
+                ${cardMediaHtml(item)}
+                <div class="card-info">
+                    <div class="card-title">${esc(item.title)}</div>
+                    <div class="card-desc">${esc(item.description || item.prompt || "\ud504\ub86c\ud504\ud2b8 \uc124\uba85 \uc5c6\uc74c")}</div>
+                    <button class="go-btn" type="button">\uc9c0\uae08 \uc0ac\uc6a9\ud574 \ubcf4\uae30</button>
+                </div>`;
+            grid.appendChild(el);
+        });
+
+        document.getElementById("pgStatus").innerText = `Page ${cur} of ${totalPages}`;
+        updateTotal();
+        updateSideButtons(totalPages);
+        drawBtns(totalPages);
+    }
+
+    function updateSideButtons(max) {
+        const prev = document.getElementById("sidePrev");
+        const next = document.getElementById("sideNext");
+        if (!prev || !next) return;
+        prev.disabled = max <= 1 || cur <= 1;
+        next.disabled = max <= 1 || cur >= max;
+    }
+
+    function drawBtns(max) {
+        const wrap = document.getElementById("pgBtns");
+        wrap.innerHTML = "";
+        let start = Math.max(1, cur - 2);
+        let end = Math.min(max, start + 4);
+        if (end - start < 4) start = Math.max(1, end - 4);
+
+        const prev = document.createElement("button");
+        prev.className = "p-num";
+        prev.innerText = "<";
+        prev.disabled = cur <= 1;
+        prev.onclick = () => goPage(cur - 1);
+        wrap.appendChild(prev);
+
+        for (let i = start; i <= end; i++) {
+            const btn = document.createElement("button");
+            btn.className = `p-num ${i === cur ? "active" : ""}`;
+            btn.innerText = i;
+            btn.onclick = () => goPage(i);
+            wrap.appendChild(btn);
+        }
+
+        const next = document.createElement("button");
+        next.className = "p-num";
+        next.innerText = ">";
+        next.disabled = cur >= max;
+        next.onclick = () => goPage(cur + 1);
+        wrap.appendChild(next);
+    }
+
+    function goPage(page) {
+        const max = Math.ceil(data.length / size);
+        if (page < 1 || page > max) return;
+        cur = page;
+        draw();
+    }
+
+    function jumpPage() {
+        const value = parseInt(document.getElementById("jumpIdx").value, 10);
+        const max = Math.ceil(data.length / size);
+        if (value >= 1 && value <= max) {
+            goPage(value);
+        }
+    }
+
+    function expandSearchWord(word) {
+        const aliases = {};
+        aliases["\uadf9\uc2e4\uc0ac"] = ["\uadf9\uc2e4\uc0ac", "\uc2e4\uc0ac", "photorealistic", "photo realistic", "ultra realistic", "hyper realistic", "realistic", "dslr", "cinematic", "lifelike", "realism"];
+        aliases["\uc2e4\uc0ac"] = ["\uc2e4\uc0ac", "photorealistic", "photo realistic", "realistic", "dslr", "lifelike"];
+        aliases["\uc601\ud654"] = ["\uc601\ud654", "cinematic", "film", "movie"];
+        aliases["\uc560\ub2c8"] = ["\uc560\ub2c8", "anime", "animation", "cartoon"];
+        aliases["\uad11\uace0"] = ["\uad11\uace0", "advertising", "commercial", "product"];
+        aliases["\ube0c\uc774\ub85c\uadf8"] = ["\ube0c\uc774\ub85c\uadf8", "vlog"];
+        aliases["\uc74c\uc2dd"] = ["\uc74c\uc2dd", "food", "cooking", "recipe"];
+        aliases["\uc790\ub3d9\ucc28"] = ["\uc790\ub3d9\ucc28", "car", "vehicle", "racing"];
+        aliases["\uc778\ubb3c"] = ["\uc778\ubb3c", "portrait", "person", "character"];
+        aliases["\ud328\uc158"] = ["\ud328\uc158", "fashion", "outfit", "clothing"];
+        return aliases[word] || [word];
+    }
+
+    function setType(type) {
+        activeType = type;
+        document.getElementById("tabAll").classList.toggle("active", type === "all");
+        document.getElementById("tabImage").classList.toggle("active", type === "image");
+        document.getElementById("tabVideo").classList.toggle("active", type === "video");
+        cur = 1;
+        applyFilters();
+    }
+
+    function applyFilters() {
+        const q = document.getElementById("sw").value.trim().toLowerCase();
+        const groups = q.split(/\s+/).filter(Boolean).map(expandSearchWord);
+        data = raw
+            .map(normalizeItem)
+            .filter(item => hasType(item, activeType))
+            .filter(item => !groups.length || groups.every(group => group.some(word => item.searchText.includes(word))));
+        draw();
+    }
+
+    function doSearch() {
+        cur = 1;
+        applyFilters();
+    }
+
+    function openM(id) {
+        const item = data.find(x => x.id === id);
+        if (!item) return;
+
+        const promptText = item.prompt || "\ud504\ub86c\ud504\ud2b8 \ub0b4\uc6a9\uc774 \uc6d0\ubcf8 \ub370\uc774\ud130\uc5d0 \uc5c6\uc2b5\ub2c8\ub2e4. \uc6d0\ubcf8 \ub9c1\ud06c\uc5d0\uc11c \ud655\uc778\uc774 \ud544\uc694\ud569\ub2c8\ub2e4.";
+        const preview = activeType === "video"
+            ? item.media.find(media => media.type === "video") || item.media[0]
+            : item.media[0];
+        document.getElementById("mVisual").innerHTML = mediaHtml(preview, "");
+        document.getElementById("mText").innerHTML = `
+            <h1>${esc(item.title)}</h1>
+            <div class="meta">${esc(item.description || "SEEDANCE 2.0 AI GENERATED PROMPT")}</div>
+            ${item.authorName ? `<div class="meta">BY ${esc(item.authorName)}</div>` : ""}
+            <div class="m-prompt" id="copyTarget">${esc(promptText)}</div>
+            <button class="m-copy" onclick="copyTxt(event)">\ud504\ub86c\ud504\ud2b8 \ubcf5\uc0ac\ud558\uae30</button>
+            ${item.sourceUrl ? `<a class="m-link" href="${esc(item.sourceUrl)}" target="_blank" rel="noopener">\uc6d0\ubcf8 \uc5f4\uae30</a>` : ""}`;
+        document.getElementById("modal").style.display = "flex";
+    }
+
+    function closeM() {
+        document.getElementById("modal").style.display = "none";
+        document.getElementById("mVisual").innerHTML = "";
+    }
+
+    async function copyTxt(event) {
+        const button = event && event.currentTarget;
+        const text = document.getElementById("copyTarget").innerText;
+        try {
+            if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(text);
+            } else {
+                const temp = document.createElement("textarea");
+                temp.value = text;
+                temp.style.position = "fixed";
+                temp.style.left = "-9999px";
+                document.body.appendChild(temp);
+                temp.focus();
+                temp.select();
+                document.execCommand("copy");
+                temp.remove();
+            }
+            if (button) {
+                button.innerText = "\ubcf5\uc0ac \uc644\ub8cc";
+                setTimeout(() => button.innerText = "\ud504\ub86c\ud504\ud2b8 \ubcf5\uc0ac\ud558\uae30", 900);
+            }
+        } catch (e) {
+            alert("\ubcf5\uc0ac\uac00 \ub9c9\ud614\uc2b5\ub2c8\ub2e4. \ud504\ub86c\ud504\ud2b8 \uc601\uc5ed\uc744 \uc9c1\uc811 \uc120\ud0dd\ud574\uc11c \ubcf5\uc0ac\ud574\uc8fc\uc138\uc694.");
+        }
+    }
+
+    function loadTrack(index, shouldPlay = false) {
+        const bgm = document.getElementById("bgm");
+        const btn = document.getElementById("musicBtn");
+        const seek = document.getElementById("musicSeek");
+        trackIndex = (index + tracks.length) % tracks.length;
+        bgm.src = tracks[trackIndex];
+        document.getElementById("trackName").innerText = tracks[trackIndex];
+        seek.value = 0;
+        btn.innerText = shouldPlay ? "PAUSE" : "PLAY";
+        btn.classList.toggle("playing", shouldPlay);
+        if (shouldPlay) {
+            bgm.load();
+            bgm.play().catch(() => alert("음악 파일을 index.html과 같은 폴더에 넣어주세요."));
+        }
+    }
+
+    async function toggleMusic() {
+        const bgm = document.getElementById("bgm");
+        const btn = document.getElementById("musicBtn");
+        try {
+            if (bgm.paused) {
+                if (!bgm.src) loadTrack(trackIndex);
+                await bgm.play();
+                btn.innerText = "PAUSE";
+                btn.classList.add("playing");
+            } else {
+                bgm.pause();
+                btn.innerText = "PLAY";
+                btn.classList.remove("playing");
+            }
+        } catch (e) {
+            alert("음악 파일을 index.html과 같은 폴더에 넣어주세요.");
+        }
+    }
+
+    function nextTrack() {
+        const wasPlaying = !document.getElementById("bgm").paused;
+        loadTrack(trackIndex + 1, wasPlaying);
+    }
+
+    function playNextTrack() {
+        loadTrack(trackIndex + 1, true);
+    }
+
+    function prevTrack() {
+        const wasPlaying = !document.getElementById("bgm").paused;
+        loadTrack(trackIndex - 1, wasPlaying);
+    }
+
+    function seekMusic(value) {
+        const bgm = document.getElementById("bgm");
+        if (!bgm.duration) return;
+        bgm.currentTime = bgm.duration * (Number(value) / 100);
+    }
+
+    const bgm = document.getElementById("bgm");
+    bgm.addEventListener("timeupdate", () => {
+        const seek = document.getElementById("musicSeek");
+        if (bgm.duration) seek.value = (bgm.currentTime / bgm.duration) * 100;
+    });
+    bgm.addEventListener("ended", playNextTrack);
+    loadTrack(0);
+
+    load();
+</script>
+</body>
+</html>
